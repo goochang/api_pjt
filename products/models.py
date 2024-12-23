@@ -1,19 +1,12 @@
+from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Product(models.Model):
-    CATEGORY_CHOICES = (
-        ("F", "Fruit"),
-        ("V", "Vegetable"),
-        ("M", "Meat"),
-        ("O", "Other"),
+    title = models.CharField(max_length=20)
+    content = models.CharField(max_length=100)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="accounts"
     )
-
-    name = models.CharField(max_length=100)
-    price = models.PositiveIntegerField()
-    quantity = models.PositiveIntegerField()
-    category = models.CharField(max_length=1, choices=CATEGORY_CHOICES)
-
-    def __str__(self):
-        return self.name
+    photo = models.ImageField(upload_to="images/photo/")
