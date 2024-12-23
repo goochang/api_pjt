@@ -20,10 +20,10 @@
 2. 로그인시 환경변수 자동 입력  
    ![image](https://github.com/user-attachments/assets/b123f1ce-a320-4da9-8728-0795e4252f77)
 
-3. 로그인 토큰 사용
+3. 로그인 토큰 사용  
    ![image](https://github.com/user-attachments/assets/f9c97395-00fa-44b4-96a3-9a55ae5b2aa0)
 
-4. 로그아웃시 refreshToken 설정  
+5. 로그아웃시 refreshToken 설정  
    ![image](https://github.com/user-attachments/assets/f5d26518-7c47-4535-8156-39ac8ee8755e)
 
 
