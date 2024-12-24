@@ -1,7 +1,24 @@
 ### Django DRF Project
 > 작업 완료일 : 2024/12/25
 - 개요: Postman 테스트를 기반으로 제작된 django DRF 프로젝트입니다.
-
+  
+### ERD 문서  
+![image](https://github.com/user-attachments/assets/2fa3a24a-5fed-4d79-8257-748856530c79)
+  
+### 트러블 슈팅  
+1. validate_email  
+    사용자 정보 업데이트 기능을 작업할때
+    Account 모델의 email 항목을 unique로 설정한 상태에서  
+    email 항목의 validate를 커스텀해서 username 항목이  
+    email 형식인 경우도 중복체크하려고 했는데 serializer의 is_valid 함수에서  
+    이미 email 중복체크가 돼서 validate_email 함수를 타지 않았습니다.  
+    그래서 email 항목의 unique 설정을 빼고 validate_email 함수에서 unique 체크를 하도록 수정했습니다.  
+2. 로그인 기능  
+    username과 password를 입력받고 authenticate함수를 실행했는데 아무리 확인해도  
+    계정정보가 정확한대 user객체를 반환하지 않아서 여러가지 방법으로 찾아봤는데  
+    비밀번호가 해싱되지 않은 문제가 있었고  
+    settings.py에서 AUTHENTICATION_BACKENDS와 AUTH_USER_MODEL 값을 설정하지 않은 문제가 있었습니다.
+  
 ### API 명세서  
 ![image](https://github.com/user-attachments/assets/12f563bc-d04b-4f27-a212-ee4a9c49526f)
 
