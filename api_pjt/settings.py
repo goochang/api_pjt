@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -139,6 +140,9 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,  # 한 페이지에 표시할 항목 수
 }
 
 
@@ -158,3 +162,9 @@ AUTH_USER_MODEL = "accounts.Account"
 # Media files
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "MY Django API",
+    "DESCRIPTION": "Django DRF API Doc",
+    "VERSION": "1.0.0",
+}
