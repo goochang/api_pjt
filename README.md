@@ -24,7 +24,7 @@
 - 로그아웃(POST) : /api/accounts/logout/  
     RefreshToken 토큰을 블랙리스트에 추가  
     ![image](https://github.com/user-attachments/assets/3cfb3249-fa4c-4c04-8a71-c93172112308)  
-- 패스워드 변경(DELETE) : /api/accounts/  
+- 패스워드 변경(PUT) : /api/accounts/  
     기존 패스워드와 변경할 패스워드는 상이해야 함  
     ![image](https://github.com/user-attachments/assets/25aec8f0-9980-4bd8-b525-3da17dbcb7f2)  
 - 상품 등록(POST) : /api/products  
