@@ -70,12 +70,11 @@ def signin(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout(request):
-    print(request.data["refreshToken"])
     # auth_logout(request)
     try:
         # 현재 사용자의 refresh token을 블랙리스트에 추가
         refresh_token = RefreshToken(request.data["refreshToken"])
-        refresh_token.blacklist()  # 토큰을 블랙리스트에 추가하여 만료 처리
+        refresh_token.blacklist()
 
         return Response({"detail": "Successfully logged out."}, status=200)
     except TokenError:
@@ -93,6 +92,7 @@ def password_update(request):
 
         if serializer.is_valid(raise_exception=True):
             password = serializer.validated_data["password"]
+            # 현재 비밀번호와 다른지 체크
             if check_password(password, user.password):
                 return Response(
                     {"message": "It is the same as your current password."},
@@ -107,9 +107,11 @@ def password_update(request):
 
 
 class AccountAPIView(APIView):
+
     def post(self, request):
         serializer = AccountSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
+            # 비밀번호 해싱
             serializer.validated_data["password"] = make_password(
                 serializer.validated_data["password"]
             )
@@ -126,6 +128,7 @@ class AccountAPIView(APIView):
             )
             if serializer.is_valid(raise_exception=True):
                 password = serializer.validated_data["password"]
+                # 비밀번호가 동일한 경우 유저 삭제 진행
                 if check_password(password, user.password):
                     user.delete()
                     data = {"message": "user deleted."}
@@ -141,8 +144,8 @@ class AccountAPIView(APIView):
 class UsernameAPIView(APIView):
     @permission_classes([IsAuthenticated])
     def get(self, request, username):
-        print(request.user)
         user = request.user
+        # username으로 유저 조회
         if user.id:
             account = get_object_or_404(Account, username=username)
 
@@ -159,6 +162,7 @@ class UsernameAPIView(APIView):
                 data=request.data, context={"user": request.user}
             )
 
+            # user update 입력값 체크
             if check_serializer.is_valid(raise_exception=True):
                 serializer = AccountUpdateSerializer(
                     instance=user,
@@ -166,6 +170,7 @@ class UsernameAPIView(APIView):
                     partial=True,
                     context={"user": request.user},
                 )
+                # user update 진행
                 if serializer.is_valid(raise_exception=True):
                     serializer.save()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
