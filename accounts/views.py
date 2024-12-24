@@ -1,7 +1,13 @@
 from django.shortcuts import get_object_or_404, render
 from .models import Account
 from rest_framework.response import Response
-from .serializers import AccountSerializer, LoginSerializer
+from .serializers import (
+    AccountSerializer,
+    LoginSerializer,
+    PasswordSerializer,
+    AccountUpdateSerializer,
+    AccountDeleteSerializer,
+)
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
@@ -13,18 +19,9 @@ from rest_framework.decorators import permission_classes
 from django.contrib.auth import logout as auth_logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-
-
-@api_view(["POST"])
-def signup(request):
-    print("signup", request.data)
-    serializer = AccountSerializer(data=request.data)
-    if serializer.is_valid(raise_exception=True):
-        serializer.validated_data["password"] = make_password(
-            serializer.validated_data["password"]
-        )
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+from django.contrib.auth import login as auth_login
+from rest_framework.views import APIView
+from django.contrib.auth.hashers import check_password
 
 
 @api_view(["POST"])
@@ -36,8 +33,16 @@ def signin(request):
         password = serializer.validated_data["password"]
         user = authenticate(request, username=username, password=password)
         if not user:
+            account = get_object_or_404(Account, username=username)
+            if account is not None and account.is_active is False:
+                return Response(
+                    {"message": "This user is deactivated"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             raise AuthenticationFailed("Invalid username or password.")
 
+        auth_login(request, user)
         # 인증 성공: Token 발급 (or JWT 발급)
         # token, created = Token.objects.get_or_create(user=user)
         refresh = RefreshToken.for_user(user)
@@ -62,24 +67,11 @@ def signin(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def profile(request, username):
-    # user = request.user
-
-    # if user.is_authenticated:
-    account = get_object_or_404(Account, username=username)
-
-    serializer = AccountSerializer(account)  # 객체를 직렬화
-    return Response(serializer.data)  # 직렬화된 데이터를 JSON으로 응답
-
-    # return Response({"message": "Login required."}, status=status.HTTP_400_BAD_REQUEST)
-
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout(request):
     print(request.data["refreshToken"])
+    auth_logout(request)
     try:
         # 현재 사용자의 refresh token을 블랙리스트에 추가
         refresh_token = RefreshToken(request.data["refreshToken"])
@@ -88,3 +80,62 @@ def logout(request):
         return Response({"detail": "Successfully logged out."}, status=200)
     except TokenError:
         return Response({"detail": "Invalid refresh token."}, status=400)
+
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def password_update(request):
+    user = request.user
+    if user.id is not None:
+        serializer = PasswordSerializer(
+            data=request.data, context={"user": request.user}
+        )
+        password = serializer.validated_data["password"]
+        if check_password(password, user.password):
+            return Response(
+                {"message": "It is the same as your current password."},
+                status=status.HTTP_201_CREATED,
+            )
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_201_CREATED)
+
+    return Response({"message": "Bad Request."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AccountAPIView(APIView):
+    def post(request):
+        serializer = AccountSerializer(data=request.data, context={"is_signup": True})
+        if serializer.is_valid(raise_exception=True):
+            serializer.validated_data["password"] = make_password(
+                serializer.validated_data["password"]
+            )
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class UsernameAPIView(APIView):
+    @permission_classes([IsAuthenticated])
+    def get(self, request, username):
+        account = get_object_or_404(Account, username=username)
+
+        serializer = AccountSerializer(account)
+        return Response(serializer.data)  # 직렬화된 데이터를 JSON으로 응답
+
+    @permission_classes([IsAuthenticated])
+    def put(self, request, username):
+        user = request.user
+        if user.id is not None and user.username == username:
+            serializer = AccountUpdateSerializer(
+                instance=user, data=request.data, partial=True
+            )
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_201_CREATED)
+
+        return Response({"message": "Bad Request."}, status=status.HTTP_400_BAD_REQUEST)
