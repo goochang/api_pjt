@@ -3,16 +3,13 @@ from .models import Product
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    author = serializers.SerializerMethodField()
+    author = serializers.SerializerMethodField()  # username 출력
+    author_id = serializers.IntegerField(source="author.id", read_only=True)  # id 출력
 
     class Meta:
         model = Product
-        fields = ["id", "title", "content", "photo", "author"]
-        extra_kwargs = {
-            # write_only : 해당 필드를 쓰기 전용으로 만들어 준다.
-            # 쓰기 전용으로 설정 된 필드는 직렬화 된 데이터에서 보여지지 않는다.
-            "author": {"write_only": True},  # default : False
-        }
+        fields = ["id", "title", "content", "photo", "author", "author_id"]
 
     def get_author(self, obj):
+        # 작성자의 username 반환
         return obj.author.username if obj.author else None

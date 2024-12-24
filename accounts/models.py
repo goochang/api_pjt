@@ -51,7 +51,7 @@ class Account(AbstractBaseUser):
     ]
 
     username = models.CharField(max_length=30, unique=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     name = models.CharField(max_length=50)
     nickname = models.CharField(max_length=30)
     birth_date = models.DateField()

@@ -83,12 +83,15 @@ class ProductListAPIView(APIView):
     @permission_classes([IsAuthenticated])
     def post(self, request):
         user = request.user
-        print(user.id)
-        request.data["author"] = user.id
-        serializer = ProductSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if user.id:
+            serializer = ProductSerializer(data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save(author=user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(
+            {"message": "Login required."}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class ProductDetailAPIView(APIView):

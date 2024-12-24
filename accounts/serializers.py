@@ -7,6 +7,28 @@ class AccountSerializer(serializers.ModelSerializer):
         model = Account
         fields = "__all__"
 
+    def validate_username(self, value):
+        if (
+            Account.objects.filter(username=value).exists()
+            or Account.objects.filter(email=value).exists()
+        ):
+            raise serializers.ValidationError(
+                "This username(email) already taken by another user."
+            )
+
+        return value
+
+    def validate_email(self, value):
+        if (
+            Account.objects.filter(username=value).exists()
+            or Account.objects.filter(email=value).exists()
+        ):
+            raise serializers.ValidationError(
+                "This email already taken by another user."
+            )
+
+        return value
+
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
@@ -57,9 +79,15 @@ class AccountUpdateSerializer(serializers.ModelSerializer):
         }
 
     def validate_email(self, value):
-        if Account.objects.filter(username=value).exists():
-            raise serializers.ValidationError(
-                "This email is already taken by another user."
-            )
+        user = self.context.get("user")
+        email = user.email
+        if value != email:
+            if (
+                Account.objects.filter(username=value).exists()
+                or Account.objects.filter(email=value).exists()
+            ):
+                raise serializers.ValidationError(
+                    "This email already taken by another user."
+                )
 
         return value
