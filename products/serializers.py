@@ -3,6 +3,7 @@ from .models import Product
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -12,3 +13,6 @@ class ProductSerializer(serializers.ModelSerializer):
             # 쓰기 전용으로 설정 된 필드는 직렬화 된 데이터에서 보여지지 않는다.
             "author": {"write_only": True},  # default : False
         }
+
+    def get_author(self, obj):
+        return obj.author.username if obj.author else None

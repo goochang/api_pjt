@@ -11,6 +11,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
 from django.core.paginator import Paginator
 from rest_framework.pagination import PageNumberPagination
+from rest_framework import filters
+from django.db.models import Q
 
 
 class ProductPagination(PageNumberPagination):
@@ -20,6 +22,27 @@ class ProductPagination(PageNumberPagination):
 class ProductListAPIView(APIView):
     pagination_class = ProductPagination
     serializer_class = ProductSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["title", "author"]
+
+    def get_queryset(self):
+        """
+        검색 및 필터링을 적용한 쿼리셋 반환
+        """
+        queryset = Product.objects.all()
+
+        # 요청에서 검색 파라미터 가져오기
+        search_query = self.request.query_params.get("search", None)
+
+        # 검색 필터링 적용 (title, author)
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query)
+                | Q(author__username__icontains=search_query)
+                | Q(content__icontains=search_query)
+            )
+
+        return queryset
 
     @property
     def paginator(self):
@@ -43,16 +66,17 @@ class ProductListAPIView(APIView):
 
     # 목록
     def get(self, request):
-        Products = Product.objects.all()
-        page = self.paginate_queryset(Products)
-        print(page)
-        if page is not None:
-            serializer = self.get_paginated_response(
-                self.serializer_class(page, many=True).data
-            )
-        else:
-            serializer = self.serializer_class(Products, many=True)
 
+        queryset = self.get_queryset()
+
+        # 페이징 적용
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.serializer_class(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        # 페이징 없이 전체 데이터 반환
+        serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # 등록
