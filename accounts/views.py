@@ -90,14 +90,14 @@ def password_update(request):
         serializer = PasswordSerializer(
             data=request.data, context={"user": request.user}
         )
-        password = serializer.validated_data["password"]
-        if check_password(password, user.password):
-            return Response(
-                {"message": "It is the same as your current password."},
-                status=status.HTTP_201_CREATED,
-            )
 
         if serializer.is_valid(raise_exception=True):
+            password = serializer.validated_data["password"]
+            if check_password(password, user.password):
+                return Response(
+                    {"message": "It is the same as your current password."},
+                    status=status.HTTP_201_CREATED,
+                )
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -127,9 +127,8 @@ class AccountAPIView(APIView):
             if serializer.is_valid(raise_exception=True):
                 password = serializer.validated_data["password"]
                 if check_password(password, user.password):
-                    user.is_active = False
-                    user.save()
-                    data = {"user soft deleted."}
+                    user.delete()
+                    data = {"message": "user deleted."}
                     return Response(data, status=status.HTTP_200_OK)
                 return Response(
                     {"message": "Password does not match."},

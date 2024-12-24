@@ -83,7 +83,7 @@ class AccountUpdateSerializer(serializers.ModelSerializer):
         email = user.email
         if value != email:
             if (
-                Account.objects.filter(username=value).exists()
+                Account.objects.exclude(id=user.id).filter(username=value).exists()
                 or Account.objects.filter(email=value).exists()
             ):
                 raise serializers.ValidationError(
