@@ -116,6 +116,28 @@ class AccountAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @permission_classes([IsAuthenticated])
+    def delete(self, request):
+        user = request.user
+
+        if user.id is not None and user.is_active:
+            serializer = AccountDeleteSerializer(
+                instance=user, data=request.data, partial=True
+            )
+            if serializer.is_valid(raise_exception=True):
+                password = serializer.validated_data["password"]
+                if check_password(password, user.password):
+                    user.is_active = False
+                    user.save()
+                    data = {"user soft deleted."}
+                    return Response(data, status=status.HTTP_200_OK)
+                return Response(
+                    {"message": "Password does not match."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        return Response({"message": "Bad Request."}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UsernameAPIView(APIView):
     @permission_classes([IsAuthenticated])
